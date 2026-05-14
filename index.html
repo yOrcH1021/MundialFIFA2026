@@ -54,8 +54,7 @@ button{ border:none; border-radius:6px; padding:6px 8px; cursor:pointer; }
     </select>
   </div>
   <div class="controls">
-    <button onclick="toggleAll(false)">Cerrar todo</button>
-    <button onclick="toggleAll(true)">Abrir todo</button>
+    <button onclick="toggleAllSmart()" id="toggleAllBtn">Cerrar todo</button>
   </div>
   <div class="stats">
     <div>Total: <span id="total"></span></div>
@@ -177,8 +176,19 @@ function render(){
   document.getElementById("bar").style.width=(owned/total*100)+"%";
 }
 
-function toggleAll(open){
-  Object.keys(sections).forEach(sec=> collapsed[sec]=!open);
+function toggleAllSmart(){
+  const allCollapsed = Object.values(collapsed).every(v => v === true);
+
+  if(allCollapsed){
+    // abrir todo
+    Object.keys(sections).forEach(sec=> collapsed[sec]=false);
+    document.getElementById('toggleAllBtn').innerText = 'Cerrar todo';
+  } else {
+    // cerrar todo
+    Object.keys(sections).forEach(sec=> collapsed[sec]=true);
+    document.getElementById('toggleAllBtn').innerText = 'Abrir todo';
+  }
+
   localStorage.setItem('collapsedSections',JSON.stringify(collapsed));
   render();
 }
