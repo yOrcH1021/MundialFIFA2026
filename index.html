@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Album Pro</title>
+<title>MundialFIFA2026</title>
 
 <style>
 :root{ --bg:#0e0e6e; --card:#1c1c9c; --owned:#2ecc71; --dupe:#f39c12; --text:#fff; }
@@ -44,7 +44,7 @@ button{ border:none; border-radius:6px; padding:6px 8px; cursor:pointer; }
 </head>
 
 <body>
-<header>FIFA 2026</header>
+<header>MundialFIFA2026</header>
 
 <div class="topbar">
   <div>
@@ -298,10 +298,10 @@ function shareCurrent(){
   const type=document.getElementById("filter").value;
   if(type==='all'){ alert('Selecciona Faltantes, Tengo o Repetidas para compartir.'); return; }
   const labels={ missing:'Faltantes', owned:'Tengo', dupe:'Repetidas' };
-  const header=`📘 Album Pro — ${labels[type]}\n\n`;
+  const header=`MundialFIFA2026 — ${labels[type]}\n\n`;
   const body=buildShare(type);
   const text=header+body;
-  if(navigator.share){ navigator.share({title:'Mi Álbum',text}); }
+  if(navigator.share){ navigator.share({title:'MundialFIFA2026',text}); }
   else{ navigator.clipboard.writeText(text); alert('Copiado al portapapeles'); }
 }
 
