@@ -33,6 +33,9 @@ input, select{ flex:1; padding:10px; border-radius:10px; border:none; width:50%;
 .card.dupe{ background:var(--dupe); }
 .count{ font-size:12px; opacity:.8; }
 
+.locked.card.owned{ background:rgba(46,204,113,0.75); }
+.locked.card.duper{ background:rgba(243,156,18,0.75); }
+
 .shareBar{ display:none; padding:10px; flex-wrap:wrap; gap:6px; }
 #app { padding:0 10px;}
 @media (max-width:768px){ .shareBar{ display:flex; } }
@@ -180,10 +183,7 @@ function render(){
       const dupeCount = c>1 ? (c-1) : 0;
       card.innerHTML=`<div>${n}</div><div class='count'>${dupeCount}</div>`;
 
-      if(globalLocked){
-        card.style.opacity = 0.75;
-        card.style.pointerEvents = 'none';
-      }
+      if(globalLocked) card.classList.add('locked');
 
       card.onclick=()=>{ if(!globalLocked){ data[key]=(c+1); save(); } };
 
