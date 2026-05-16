@@ -11,27 +11,27 @@ body{ margin:0; font-family: system-ui, Arial; background:var(--bg); color:var(-
 header{ padding:15px; text-align:center; font-size:20px; font-weight:bold; }
 
 .topbar{ display:flex; flex-direction: column; gap:10px; padding:10px; position:sticky; top:0; background:var(--bg); z-index: 1; }
-.topbar > div:first-child{ display:flex; gap:10px; }
+.topbar > div:first-child{ display:flex; gap:10px; align-items:center; }
 
 input, select{ flex:1; padding:10px; border-radius:10px; border:none; width:50%; box-sizing:border-box; }
 
-.controls{ display:flex; gap:10px; }
-.controls button{ flex:1; }
+.controls{ display:flex; gap:6px; }
+.controls button{ min-width:40px; }
 
-.stats{ display:flex; justify-content:space-around; font-size:14px; padding:5px; }
+.stats{ display:flex; justify-content:space-around; font-size:16px; padding:5px; }
 .progress{ height:6px; background:#222; }
 .progress div{ height:100%; background:#2ecc71; width:0%; }
 
 .section{ padding:10px; }
 .section h2{ font-size:14px; margin:10px 0; opacity:.8; display:flex; justify-content:space-between; align-items:center; }
 
-.grid{ display:grid; grid-template-columns: repeat(auto-fill,minmax(55px,1fr)); gap:6px; }
+.grid{ display:grid; grid-template-columns: repeat(auto-fill,minmax(60px,1fr)); gap:8px; }
 .hidden{ display:none; }
 
-.card{ background:var(--card); border-radius:12px; padding:8px; text-align:center; font-size:12px; }
+.card{ background:var(--card); border-radius:12px; padding:12px; text-align:center; font-size:14px; }
 .card.owned{ background:var(--owned); }
 .card.dupe{ background:var(--dupe); }
-.count{ font-size:10px; opacity:.8; }
+.count{ font-size:12px; opacity:.8; }
 
 .shareBar{ display:none; padding:10px; flex-wrap:wrap; gap:6px; }
 @media (max-width:768px){ .shareBar{ display:flex; } }
@@ -52,14 +52,16 @@ button{ border:none; border-radius:6px; padding:6px 8px; cursor:pointer; }
       <option value="owned">Tengo</option>
       <option value="dupe">Repetidas</option>
     </select>
-  </div>
-  <div class="controls">
-    <button onclick="toggleAllSmart()" id="toggleAllBtn">Cerrar todo</button>
+    <div class="controls">
+      <button onclick="toggleAllSmart()" id="toggleAllBtn">☰</button>
+      <button onclick="toggleGlobalLock()" id="lockBtn">🔓</button>
+    </div>
   </div>
   <div class="stats">
     <div>Total: <span id="total"></span></div>
     <div>Tienes: <span id="owned"></span></div>
     <div>Faltan: <span id="missing"></span></div>
+    <div>Repetidas: <span id="dupes"></span></div>
   </div>
   <div class="progress"><div id="bar"></div></div>
 </div>
@@ -83,12 +85,13 @@ sections["CC 🥤"] = Array.from({length:14},(_,i)=>(i+1).toString());
 
 let data = JSON.parse(localStorage.getItem("albumPro"))||{};
 let collapsed = JSON.parse(localStorage.getItem("collapsedSections"))||{};
+let globalLocked = JSON.parse(localStorage.getItem("globalLock"))||false;
 
 const app = document.getElementById("app");
 
 function render(){
   app.innerHTML="";
-  let total=0, owned=0;
+  let total=0, owned=0, dupes=0;
   const filter = document.getElementById("filter").value;
 
   Object.entries(sections).forEach(([sec,nums])=>{
@@ -112,6 +115,7 @@ function render(){
     resetBtn.innerText='Reset';
     resetBtn.onclick=(e)=>{
       e.stopPropagation();
+      if(globalLocked) return;
       nums.forEach(n=> delete data[sec+'-'+n]);
       save();
     };
@@ -131,6 +135,7 @@ function render(){
       const key=sec+"-"+n;
       const c=data[key]||0;
       if(c>=1) owned++;
+      if(c>1) dupes += (c-1);
 
       let show=true;
       if(filter==="missing" && c>0) show=false;
@@ -143,12 +148,19 @@ function render(){
       if(c===1) card.classList.add("owned");
       if(c>1) card.classList.add("dupe");
 
-      card.innerHTML=`<div>${n}</div><div class='count'>${c}</div>`;
+      const dupeCount = c>1 ? (c-1) : 0;
+      card.innerHTML=`<div>${n}</div><div class='count'>${dupeCount}</div>`;
 
-      card.onclick=()=>{ data[key]=(c+1); save(); };
+      if(globalLocked){
+        card.style.opacity = 0.5;
+        card.style.pointerEvents = 'none';
+      }
+
+      card.onclick=()=>{ if(!globalLocked){ data[key]=(c+1); save(); } };
 
       card.oncontextmenu=(e)=>{
         e.preventDefault();
+        if(globalLocked) return;
         if(c>0) data[key]=c-1;
         if(data[key]<=0) delete data[key];
         save();
@@ -156,7 +168,7 @@ function render(){
 
       let timer;
       card.addEventListener('touchstart',()=>{
-        timer=setTimeout(()=>{ delete data[key]; save(); },300);
+        timer=setTimeout(()=>{ if(!globalLocked){ delete data[key]; save(); } },300);
       });
       card.addEventListener('touchend',()=>clearTimeout(timer));
       card.addEventListener('touchmove',()=>clearTimeout(timer));
@@ -173,20 +185,25 @@ function render(){
   document.getElementById("total").innerText=total;
   document.getElementById("owned").innerText=owned;
   document.getElementById("missing").innerText=total-owned;
+  document.getElementById("dupes").innerText=dupes;
   document.getElementById("bar").style.width=(owned/total*100)+"%";
+
+  document.getElementById("lockBtn").innerText = globalLocked ? '🔒' : '🔓';
+}
+
+function toggleGlobalLock(){
+  globalLocked = !globalLocked;
+  localStorage.setItem("globalLock", JSON.stringify(globalLocked));
+  render();
 }
 
 function toggleAllSmart(){
   const allCollapsed = Object.values(collapsed).every(v => v === true);
 
   if(allCollapsed){
-    // abrir todo
     Object.keys(sections).forEach(sec=> collapsed[sec]=false);
-    document.getElementById('toggleAllBtn').innerText = 'Cerrar todo';
   } else {
-    // cerrar todo
     Object.keys(sections).forEach(sec=> collapsed[sec]=true);
-    document.getElementById('toggleAllBtn').innerText = 'Abrir todo';
   }
 
   localStorage.setItem('collapsedSections',JSON.stringify(collapsed));
