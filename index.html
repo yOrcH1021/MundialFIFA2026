@@ -285,7 +285,7 @@ function buildShare(type){
       if(!include) return;
 
       if(!grouped[sec]) grouped[sec]=[];
-      grouped[sec].push(c>1?`${n}(${c-1})`:n);
+      grouped[sec].push(c>2?`${n}(${c-1})`:n);
     });
   });
 
