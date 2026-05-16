@@ -122,7 +122,6 @@ function render(){
     right.style.gap='6px';
     right.style.alignItems='center';
 
-    // progreso por sección
     let ownedSec = 0;
 
     nums.forEach(n=>{
@@ -141,10 +140,8 @@ function render(){
       e.stopPropagation();
       if(globalLocked) return;
 
-      const c1 = confirm(`¿Borrar la sección ${sec}?`);
+      const c1 = confirm(`¿Borrar todas las figuritas de la sección ${sec}?`);
       if(!c1) return;
-      const c2 = confirm('Esta acción no se puede deshacer. ¿Confirmar?');
-      if(!c2) return;
 
       nums.forEach(n=> delete data[sec+'-'+n]);
       save();
@@ -247,7 +244,6 @@ function save(){
   render();
 }
 
-// BACKUP
 function exportData(){
   const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
   const a = document.createElement("a");
@@ -286,11 +282,10 @@ function buildShare(type){
       if(type==='missing' && c===0) include=true;
       if(type==='owned' && c>=1) include=true;
       if(type==='dupe' && c>1) include=true;
-      if(type==='all') include=true;
       if(!include) return;
 
       if(!grouped[sec]) grouped[sec]=[];
-      grouped[sec].push(c>1?`${n}(x${c})`:n);
+      grouped[sec].push(c>1?`${n}(x${c-1})`:n);
     });
   });
 
@@ -301,9 +296,13 @@ function buildShare(type){
 
 function shareCurrent(){
   const type=document.getElementById("filter").value;
-  const text=buildShare(type);
+  if(type==='all'){ alert('Selecciona Faltantes, Tengo o Repetidas para compartir.'); return; }
+  const labels={ missing:'Faltantes', owned:'Tengo', dupe:'Repetidas' };
+  const header=`📘 Album Pro — ${labels[type]}\n\n`;
+  const body=buildShare(type);
+  const text=header+body;
   if(navigator.share){ navigator.share({title:'Mi Álbum',text}); }
-  else{ navigator.clipboard.writeText(text); alert('Copiado'); }
+  else{ navigator.clipboard.writeText(text); alert('Copiado al portapapeles'); }
 }
 
 document.getElementById("filter").onchange=render;
